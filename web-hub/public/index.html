@@ -109,6 +109,11 @@
           <button class="w-full py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium">Register</button>
           <div id="register-result" class="text-sm" aria-live="polite"></div>
         </form>
+        <div id="coming-soon" hidden class="glow rounded-2xl bg-slate-900/60 p-6">
+          <div class="text-xs uppercase tracking-wider text-indigo-300 font-medium">Coming soon</div>
+          <h3 class="text-2xl font-semibold text-white mt-2">Registration opens soon</h3>
+          <p class="text-slate-400 text-sm mt-3">We're making sure everything is ready before the exchange opens. Follow the project on <a class="underline" href="https://github.com/moshehollander-hub/codegedanken">GitHub</a> to hear when it does.</p>
+        </div>
       </div>
     </section>
   </main>
@@ -126,6 +131,12 @@
       `<tr><td class="py-1.5">${n}</td><td class="text-right">${c}</td><td class="text-right">${p}</td></tr>`).join('');
 
     const form = document.getElementById('register');
+    fetch('/api/config').then((r) => r.json()).then((c) => {
+      if (c.registrationOpen) return;
+      form.hidden = true;
+      document.getElementById('coming-soon').hidden = false;
+      document.querySelectorAll('a[href="#join"]').forEach((a) => { a.textContent = a.textContent.replace(/Join( the exchange)?/, 'Coming soon'); });
+    }).catch(() => {});
     form.timezone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     form.addEventListener('submit', async (e) => {

@@ -31,6 +31,8 @@ export interface AppOptions {
   now?: () => number;
   /** Looks up a public pull request. Injectable for tests; defaults to the GitHub REST API. */
   fetchPr?: (owner: string, repo: string, number: number) => Promise<PullRequestInfo | null>;
+  /** Whether new sign-ups are accepted. Defaults to the REGISTRATION_OPEN env var ("true" opens it); closed otherwise. */
+  registrationOpen?: boolean;
 }
 
 /** The fields of a GitHub pull request the hub checks before awarding credits. */
@@ -93,6 +95,7 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
   const db = openDb(opts.dbPath ?? 'codegedanken.db');
   const now = opts.now ?? Date.now;
   const fetchPr = opts.fetchPr ?? githubFetchPr;
+  const registrationOpen = opts.registrationOpen ?? process.env.REGISTRATION_OPEN === 'true';
   const iso = () => new Date(now()).toISOString();
   // Trust only the first hop → req.ip is the address added by the one proxy in front of us (Railway), not a client-supplied header.
   const app = Fastify({ logger: opts.logger ?? false, bodyLimit: 256 * 1024, trustProxy: (_addr: string, hop: number) => hop === 0 }) as unknown as FastifyInstance & { db: DB };
@@ -216,11 +219,13 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
   app.get('/dashboard', page('dashboard.html'));
   app.get('/privacy', page('privacy.html'));
   app.get('/healthz', async () => ({ ok: true }));
+  app.get('/api/config', async () => ({ registrationOpen }));
 
   // -------------------------------------------------------------------------
   // Users
   // -------------------------------------------------------------------------
   app.post('/api/users/register', async (req, reply) => {
+    if (!registrationOpen) return fail(reply, 503, 'Registration opens soon. Please check back later.', { comingSoon: true });
     const v = validateRegister(req.body);
     if (!v.ok) return fail(reply, 400, 'Invalid registration.', { details: v.errors });
     if (!allowSignup(req.ip)) return fail(reply, 429, 'Too many sign-ups from this network. Please try again in an hour.');

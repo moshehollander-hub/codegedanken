@@ -19,6 +19,7 @@ test('end-to-end: register → submit → heartbeat → pull → claim → compl
   let clock = Date.parse('2026-11-27T20:00:00Z');
   const app = await buildApp({
     dbPath: ':memory:',
+    registrationOpen: true,
     now: () => clock,
     fetchPr: fakeGithub({
       'owner/tool#7': withFooter(),
@@ -163,7 +164,7 @@ test('end-to-end: register → submit → heartbeat → pull → claim → compl
 
 test('cancel refunds unstarted subtasks, and later ones whose claim is given back', async () => {
   const clock = Date.parse('2026-11-27T20:00:00Z');
-  const app = await buildApp({ dbPath: ':memory:', now: () => clock, fetchPr: fakeGithub({}) });
+  const app = await buildApp({ dbPath: ':memory:', registrationOpen: true, now: () => clock, fetchPr: fakeGithub({}) });
   const call = async (method: 'GET' | 'POST', url: string, token?: string, body?: unknown) => {
     const res = await app.inject({ method, url, headers: token ? { authorization: `Bearer ${token}` } : {}, ...(body !== undefined ? { payload: body as object } : {}) });
     return { status: res.statusCode, json: res.body ? res.json() : null };
@@ -197,7 +198,7 @@ test('cancel refunds unstarted subtasks, and later ones whose claim is given bac
 });
 
 test('sign-ups are rate limited per IP and accounts can be deleted by their owner', async () => {
-  const app = await buildApp({ dbPath: ':memory:', fetchPr: fakeGithub({}) });
+  const app = await buildApp({ dbPath: ':memory:', registrationOpen: true, fetchPr: fakeGithub({}) });
   const register = (i: number, ip = '203.0.113.5') =>
     app.inject({
       method: 'POST',
@@ -222,6 +223,23 @@ test('sign-ups are rate limited per IP and accounts can be deleted by their owne
     assert.equal((await app.inject({ method: 'POST', url: '/api/me/delete', headers: auth })).statusCode, 200);
     assert.equal((await app.inject({ method: 'GET', url: '/api/me', headers: auth })).statusCode, 401);
     assert.equal(app.db.prepare("SELECT 1 FROM users WHERE email = 'u3000@example.com' OR handle = 'user3000'").get(), undefined);
+  } finally {
+    await app.close();
+  }
+});
+
+test('registration is closed by default and says it is coming soon', async () => {
+  delete process.env.REGISTRATION_OPEN;
+  const app = await buildApp({ dbPath: ':memory:' });
+  try {
+    assert.deepEqual((await app.inject({ method: 'GET', url: '/api/config' })).json(), { registrationOpen: false });
+    const res = await app.inject({
+      method: 'POST', url: '/api/users/register',
+      payload: { email: 'x@example.com', handle: 'xx', tier: 'pro_20', timezone: 'UTC' },
+    });
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.json().comingSoon, true);
+    assert.match((await app.inject({ method: 'GET', url: '/' })).body, /Registration opens soon/);
   } finally {
     await app.close();
   }
