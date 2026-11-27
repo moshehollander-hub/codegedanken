@@ -3,7 +3,7 @@
   "name": "Co(de)Gedanken Bridge",
   "short_name": "CG Bridge",
   "version": "0.1.0",
-  "description": "Shows Co(de)Gedanken subtasks for you to review, and pastes the ones you accept into Claude Code on the web. You always press Send yourself.",
+  "description": "Shows Co(de)Gedanken subtasks to review and pastes the ones you accept into Claude Code on the web. You always press Send.",
   "permissions": ["storage", "alarms", "idle"],
   "icons": {
     "16": "icons/icon16.png",

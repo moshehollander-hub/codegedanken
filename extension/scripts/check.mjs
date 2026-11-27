@@ -9,6 +9,8 @@ const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 const errors = [];
 
 if (manifest.manifest_version !== 3) errors.push('manifest_version must be 3');
+// Chrome Web Store rejects descriptions longer than 132 characters.
+if (!manifest.description || manifest.description.length > 132) errors.push('description must be 1-132 characters');
 for (const p of ['storage', 'alarms', 'idle']) if (!manifest.permissions?.includes(p)) errors.push(`missing permission ${p}`);
 // Keep the permission list minimal for Chrome Web Store review: host permissions already cover claude.ai tabs.
 for (const p of manifest.permissions ?? []) if (!['storage', 'alarms', 'idle'].includes(p)) errors.push(`unexpected permission ${p}`);
