@@ -6,6 +6,8 @@ import {
   CLAIM_TTL_MS,
   CREDITS_PER_SUBTASK,
   NODE_ONLINE_MS,
+  PR_FOOTER_MARKER,
+  REGISTRATIONS_PER_IP_PER_HOUR,
   TIER_CONFIG,
   buildPrompt,
   decomposeTask,
@@ -27,9 +29,31 @@ export interface AppOptions {
   logger?: boolean;
   /** Injectable clock for tests. */
   now?: () => number;
+  /** Looks up a public pull request. Injectable for tests; defaults to the GitHub REST API. */
+  fetchPr?: (owner: string, repo: string, number: number) => Promise<PullRequestInfo | null>;
+}
+
+/** The fields of a GitHub pull request the hub checks before awarding credits. */
+export interface PullRequestInfo {
+  createdAt: string;
+  body: string;
 }
 
 type Row = Record<string, unknown>;
+
+/** Reads a public PR from GitHub. Returns null if it does not exist; throws if GitHub can't be reached. */
+async function githubFetchPr(owner: string, repo: string, number: number): Promise<PullRequestInfo | null> {
+  const headers: Record<string, string> = { accept: 'application/vnd.github+json', 'user-agent': 'codegedanken-hub' };
+  if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${number}`, {
+    headers,
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
+  const pr = (await res.json()) as { created_at: string; body: string | null };
+  return { createdAt: pr.created_at, body: pr.body ?? '' };
+}
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const MAX_ACTIVE_CLAIMS = 2;
@@ -68,8 +92,10 @@ function toSubTask(r: Row): SubTask {
 export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance & { db: DB }> {
   const db = openDb(opts.dbPath ?? 'codegedanken.db');
   const now = opts.now ?? Date.now;
+  const fetchPr = opts.fetchPr ?? githubFetchPr;
   const iso = () => new Date(now()).toISOString();
-  const app = Fastify({ logger: opts.logger ?? false, bodyLimit: 256 * 1024 }) as unknown as FastifyInstance & { db: DB };
+  // Trust only the first hop → req.ip is the address added by the one proxy in front of us (Railway), not a client-supplied header.
+  const app = Fastify({ logger: opts.logger ?? false, bodyLimit: 256 * 1024, trustProxy: (_addr: string, hop: number) => hop === 0 }) as unknown as FastifyInstance & { db: DB };
   app.decorate('db', db);
   app.addHook('onClose', async () => db.close());
 
@@ -121,11 +147,47 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
     };
   }
 
+  /**
+   * Subtasks of a cancelled task that are back in the queue (a claim expired or was given back)
+   * are cancelled too, and their credits go back to the task owner.
+   */
+  function refundQueuedOfCancelledTasks() {
+    const rows = db
+      .prepare(
+        `SELECT t.owner_id AS owner, COUNT(*) AS n FROM subtasks s JOIN tasks t ON t.id = s.task_id
+         WHERE s.status = 'queued' AND t.status = 'cancelled' GROUP BY t.owner_id`,
+      )
+      .all() as Row[];
+    if (!rows.length) return;
+    tx(() => {
+      for (const r of rows) db.prepare('UPDATE users SET credits = credits + ? WHERE id = ?').run(Number(r.n) * CREDITS_PER_SUBTASK, r.owner as string);
+      db.prepare(
+        "UPDATE subtasks SET status = 'cancelled' WHERE status = 'queued' AND task_id IN (SELECT id FROM tasks WHERE status = 'cancelled')",
+      ).run();
+    });
+  }
+
   function releaseExpiredClaims() {
     const cutoff = new Date(now() - CLAIM_TTL_MS).toISOString();
     db.prepare(
       "UPDATE subtasks SET status = 'queued', claimed_by = NULL, claimed_at = NULL WHERE status = 'claimed' AND claimed_at < ?",
     ).run(cutoff);
+    refundQueuedOfCancelledTasks();
+  }
+
+  // Simple in-memory limiter for sign-ups: at most N per IP per hour.
+  const signups = new Map<string, number[]>();
+  function allowSignup(ip: string): boolean {
+    const hourAgo = now() - 3_600_000;
+    const recent = (signups.get(ip) ?? []).filter((t) => t > hourAgo);
+    if (recent.length >= REGISTRATIONS_PER_IP_PER_HOUR) {
+      signups.set(ip, recent);
+      return false;
+    }
+    recent.push(now());
+    signups.set(ip, recent);
+    if (signups.size > 10_000) for (const [k, v] of signups) if (!v.some((t) => t > hourAgo)) signups.delete(k);
+    return true;
   }
 
   function offerFor(subRow: Row) {
@@ -161,12 +223,15 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
   app.post('/api/users/register', async (req, reply) => {
     const v = validateRegister(req.body);
     if (!v.ok) return fail(reply, 400, 'Invalid registration.', { details: v.errors });
+    if (!allowSignup(req.ip)) return fail(reply, 429, 'Too many sign-ups from this network. Please try again in an hour.');
     const { email, handle, tier, timezone } = v.value;
     const cfg = TIER_CONFIG[tier];
     if (!cfg.allowed) {
-      db.prepare('INSERT INTO waitlist (id, email, handle, tier, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
-        randomUUID(), email, handle, tier, 'free tier cannot join the exchange', iso(),
-      );
+      const already = db.prepare('SELECT 1 FROM waitlist WHERE email = ?').get(email);
+      if (!already)
+        db.prepare('INSERT INTO waitlist (id, email, handle, tier, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+          randomUUID(), email, handle, tier, 'free tier cannot join the exchange', iso(),
+        );
       return fail(reply, 403, 'The exchange is open to paid Claude plans only. You have been added to the waitlist.', {
         waitlisted: true,
       });
@@ -186,6 +251,28 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
     const u = requireUser(req, reply);
     if (!u) return;
     return { user: u, tierConfig: TIER_CONFIG[u.tier] };
+  });
+
+  // Self-service account deletion: removes personal data without anyone having to ask in public.
+  // Delivered PR links stay (they are public on GitHub) but are no longer linked to an email or handle.
+  app.post('/api/me/delete', async (req, reply) => {
+    const u = requireUser(req, reply);
+    if (!u) return;
+    tx(() => {
+      // Give back anything this person is working on for others.
+      db.prepare("UPDATE subtasks SET status = 'queued', claimed_by = NULL, claimed_at = NULL WHERE claimed_by = ? AND status = 'claimed'").run(u.id);
+      // Withdraw their own open tasks: nothing of theirs stays in the queue.
+      db.prepare("UPDATE subtasks SET status = 'cancelled' WHERE status = 'queued' AND task_id IN (SELECT id FROM tasks WHERE owner_id = ?)").run(u.id);
+      db.prepare("UPDATE tasks SET status = 'cancelled' WHERE owner_id = ? AND status = 'open'").run(u.id);
+      db.prepare('DELETE FROM nodes WHERE user_id = ?').run(u.id);
+      db.prepare('DELETE FROM waitlist WHERE email = ?').run(u.email);
+      const short = u.id.slice(0, 8);
+      db.prepare(
+        "UPDATE users SET email = ?, handle = ?, token_hash = ?, credits = 0, timezone = 'UTC' WHERE id = ?",
+      ).run(`deleted-${u.id}@invalid`, `deleted-${short}`, sha256(randomBytes(24).toString('hex')), u.id);
+    });
+    refundQueuedOfCancelledTasks();
+    return { ok: true };
   });
 
   // -------------------------------------------------------------------------
@@ -216,6 +303,25 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
       db.prepare('UPDATE users SET credits = credits - ? WHERE id = ?').run(cost, u.id);
     });
     return reply.code(201).send({ task: loadTask(taskId), cost });
+  });
+
+  // Owner cancels a task: subtasks nobody has started are withdrawn and their credits refunded.
+  // Subtasks someone is already working on may still be delivered (the helper keeps their credits);
+  // if such a claim is given back or expires, it is refunded then.
+  app.post('/api/tasks/:id/cancel', async (req, reply) => {
+    const u = requireUser(req, reply);
+    if (!u) return;
+    const task = loadTask((req.params as { id: string }).id);
+    if (!task || task.ownerId !== u.id) return fail(reply, 404, 'Task not found.');
+    if (task.status !== 'open') return fail(reply, 409, `This task is already ${task.status}.`);
+    const refunded = tx(() => {
+      const n = db.prepare("UPDATE subtasks SET status = 'cancelled' WHERE task_id = ? AND status = 'queued'").run(task.id).changes;
+      db.prepare("UPDATE tasks SET status = 'cancelled' WHERE id = ?").run(task.id);
+      db.prepare('UPDATE users SET credits = credits + ? WHERE id = ?').run(Number(n) * CREDITS_PER_SUBTASK, u.id);
+      return Number(n) * CREDITS_PER_SUBTASK;
+    });
+    const me = toUser(db.prepare('SELECT * FROM users WHERE id = ?').get(u.id) as Row);
+    return { ok: true, refunded, credits: me.credits, task: loadTask(task.id) };
   });
 
   app.get('/api/tasks', async (req, reply) => {
@@ -282,6 +388,7 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
       .prepare("UPDATE subtasks SET status = 'queued', claimed_by = NULL, claimed_at = NULL WHERE id = ? AND claimed_by = ? AND status = 'claimed'")
       .run(id, u.id);
     if (res.changes !== 1) return fail(reply, 409, 'You do not hold this subtask.');
+    refundQueuedOfCancelledTasks();
     return { ok: true };
   });
 
@@ -296,14 +403,37 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
     const task = loadTask(String(sub.task_id))!;
     if (!prUrl.toLowerCase().startsWith(task.repoUrl.toLowerCase() + '/pull/'))
       return fail(reply, 400, `The pull request must be opened against ${task.repoUrl}.`);
-    tx(() => {
+    const used = db.prepare('SELECT 1 FROM subtasks WHERE lower(pr_url) = lower(?)').get(prUrl);
+    if (used) return fail(reply, 409, 'That pull request has already been reported for another subtask.');
+
+    // Check with GitHub that the PR is real, was opened after this claim, and carries the footer.
+    const [, owner, repo, num] = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)$/i.exec(prUrl) ?? [];
+    let pr: PullRequestInfo | null;
+    try {
+      pr = await fetchPr(owner!, repo!, Number(num));
+    } catch {
+      return fail(reply, 503, 'Could not reach GitHub to check the pull request. Please try again in a few minutes.');
+    }
+    if (!pr) return fail(reply, 400, 'That pull request was not found on GitHub.');
+    if (Date.parse(pr.createdAt) < Date.parse(String(sub.claimed_at)))
+      return fail(reply, 400, 'That pull request was opened before you accepted this subtask.');
+    if (!pr.body.includes(PR_FOOTER_MARKER))
+      return fail(reply, 400, 'The pull request description is missing the Co(de)Gedanken footer from the prompt. Add it and try again.');
+
+    const ok = tx(() => {
+      // Re-check inside the transaction: the GitHub call above was async.
+      const still = db.prepare("SELECT 1 FROM subtasks WHERE id = ? AND claimed_by = ? AND status = 'claimed'").get(id, u.id);
+      const dup = db.prepare('SELECT 1 FROM subtasks WHERE lower(pr_url) = lower(?)').get(prUrl);
+      if (!still || dup) return false;
       db.prepare("UPDATE subtasks SET status = 'completed', pr_url = ?, completed_at = ? WHERE id = ?").run(prUrl, iso(), id);
       db.prepare('UPDATE users SET credits = credits + ?, completed_count = completed_count + 1 WHERE id = ?').run(
         CREDITS_PER_SUBTASK, u.id,
       );
-      const left = db.prepare("SELECT COUNT(*) AS n FROM subtasks WHERE task_id = ? AND status != 'completed'").get(task.id) as Row;
-      if (Number(left.n) === 0) db.prepare("UPDATE tasks SET status = 'completed' WHERE id = ?").run(task.id);
+      const left = db.prepare("SELECT COUNT(*) AS n FROM subtasks WHERE task_id = ? AND status IN ('queued', 'claimed')").get(task.id) as Row;
+      if (Number(left.n) === 0) db.prepare("UPDATE tasks SET status = 'completed' WHERE id = ? AND status = 'open'").run(task.id);
+      return true;
     });
+    if (!ok) return fail(reply, 409, 'This subtask was already completed or is no longer yours.');
     const me = toUser(db.prepare('SELECT * FROM users WHERE id = ?').get(u.id) as Row);
     return { ok: true, credits: me.credits, task: loadTask(task.id) };
   });

@@ -1,11 +1,33 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildApp } from '../app.js';
-import { CLAIM_TTL_MS, CREDITS_PER_SUBTASK, PR_FOOTER } from '@codegedanken/shared';
+import { buildApp, type PullRequestInfo } from '../app.js';
+import { CLAIM_TTL_MS, CREDITS_PER_SUBTASK, PR_FOOTER, REGISTRATIONS_PER_IP_PER_HOUR } from '@codegedanken/shared';
+
+/** Fake GitHub: PRs keyed by "owner/repo#n". A key mapped to 'down' simulates GitHub being unreachable. */
+function fakeGithub(prs: Record<string, PullRequestInfo | 'down'>) {
+  return async (owner: string, repo: string, n: number) => {
+    const pr = prs[`${owner}/${repo}#${n}`];
+    if (pr === 'down') throw new Error('unreachable');
+    return pr ?? null;
+  };
+}
+
+const LATER = '2026-11-28T03:00:00Z';
+const withFooter = (createdAt = LATER): PullRequestInfo => ({ createdAt, body: 'Adds the flag.' + PR_FOOTER });
 
 test('end-to-end: register → submit → heartbeat → pull → claim → complete → aggregate', async () => {
   let clock = Date.parse('2026-11-27T20:00:00Z');
-  const app = await buildApp({ dbPath: ':memory:', now: () => clock });
+  const app = await buildApp({
+    dbPath: ':memory:',
+    now: () => clock,
+    fetchPr: fakeGithub({
+      'owner/tool#7': withFooter(),
+      'owner/tool#8': withFooter('2026-11-28T09:00:00Z'),
+      'owner/tool#1': withFooter('2026-11-01T00:00:00Z'), // opened before the claim
+      'owner/tool#2': { createdAt: LATER, body: 'no footer here' },
+      'owner/tool#3': 'down',
+    }),
+  });
   const call = async (method: 'GET' | 'POST', url: string, token?: string, body?: unknown) => {
     const res = await app.inject({
       method,
@@ -97,6 +119,12 @@ test('end-to-end: register → submit → heartbeat → pull → claim → compl
     assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://example.com/x' })).status, 400);
     assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/other/repo/pull/1' })).status, 400);
     assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenA, { prUrl: 'https://github.com/owner/tool/pull/7' })).status, 409);
+    // ...and checks the PR with GitHub: it must exist, be newer than the claim, carry the footer
+    assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/99' })).status, 400);
+    assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/1' })).status, 400);
+    assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/2' })).status, 400);
+    assert.equal((await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/3' })).status, 503);
+    assert.equal((await call('GET', '/api/me', tokenB)).json.user.credits, 100, 'no credits for rejected PRs');
     const done = await call('POST', `/api/tasks/${subId}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/7' });
     assert.equal(done.status, 200);
     assert.equal(done.json.credits, 100 + CREDITS_PER_SUBTASK);
@@ -109,6 +137,8 @@ test('end-to-end: register → submit → heartbeat → pull → claim → compl
     const again = await call('GET', '/api/tasks/pull', tokenB);
     assert.equal(again.json.subtask.id, sub2);
     assert.equal((await call('POST', `/api/subtasks/${sub2}/claim`, tokenB)).status, 200);
+    // The same PR can't be reported twice
+    assert.equal((await call('POST', `/api/tasks/${sub2}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/7' })).status, 409);
     assert.equal((await call('POST', `/api/tasks/${sub2}/complete`, tokenB, { prUrl: 'https://github.com/owner/tool/pull/8' })).status, 200);
 
     // Owner sees the aggregated PRs and the task is completed
@@ -126,6 +156,72 @@ test('end-to-end: register → submit → heartbeat → pull → claim → compl
     const big = Array.from({ length: 8 }, (_, i) => `- item ${i}`).join('\n');
     for (let i = 0; i < 2; i++) await call('POST', '/api/tasks', tokenB, { title: 'Big task', description: big, repoUrl: 'https://github.com/helper/x' });
     assert.equal((await call('POST', '/api/tasks', tokenB, { title: 'Big task', description: big, repoUrl: 'https://github.com/helper/x' })).status, 402);
+  } finally {
+    await app.close();
+  }
+});
+
+test('cancel refunds unstarted subtasks, and later ones whose claim is given back', async () => {
+  const clock = Date.parse('2026-11-27T20:00:00Z');
+  const app = await buildApp({ dbPath: ':memory:', now: () => clock, fetchPr: fakeGithub({}) });
+  const call = async (method: 'GET' | 'POST', url: string, token?: string, body?: unknown) => {
+    const res = await app.inject({ method, url, headers: token ? { authorization: `Bearer ${token}` } : {}, ...(body !== undefined ? { payload: body as object } : {}) });
+    return { status: res.statusCode, json: res.body ? res.json() : null };
+  };
+  try {
+    const a = (await call('POST', '/api/users/register', undefined, { email: 'a@example.com', handle: 'aaa', tier: 'pro_20', timezone: 'UTC' })).json.token;
+    const b = (await call('POST', '/api/users/register', undefined, { email: 'b@example.com', handle: 'bbb', tier: 'pro_20', timezone: 'UTC' })).json.token;
+    const desc = 'Three things.\n- one in a.ts\n- two in b.ts\n- three in c.ts';
+    const task = (await call('POST', '/api/tasks', a, { title: 'Three', description: desc, repoUrl: 'https://github.com/aaa/r' })).json.task;
+    assert.equal((await call('GET', '/api/me', a)).json.user.credits, 70);
+
+    // Helper starts one subtask, then the owner cancels: the two unstarted ones are refunded
+    const offer = (await call('GET', '/api/tasks/pull', b)).json;
+    assert.equal((await call('POST', `/api/subtasks/${offer.subtask.id}/claim`, b)).status, 200);
+    assert.equal((await call('POST', `/api/tasks/${task.id}/cancel`, b)).status, 404, 'only the owner can cancel');
+    const c = await call('POST', `/api/tasks/${task.id}/cancel`, a);
+    assert.equal(c.status, 200);
+    assert.equal(c.json.refunded, 20);
+    assert.equal(c.json.credits, 90);
+    assert.equal(c.json.task.status, 'cancelled');
+    assert.equal((await call('POST', `/api/tasks/${task.id}/cancel`, a)).status, 409);
+    assert.equal((await call('GET', '/api/tasks/pull', b)).status, 204, 'nothing left in the queue');
+
+    // The helper gives the started one back: it is cancelled and refunded too
+    assert.equal((await call('POST', `/api/subtasks/${offer.subtask.id}/release`, b)).status, 200);
+    assert.equal((await call('GET', '/api/me', a)).json.user.credits, 100);
+    assert.equal((await call('GET', '/api/tasks/pull', b)).status, 204);
+  } finally {
+    await app.close();
+  }
+});
+
+test('sign-ups are rate limited per IP and accounts can be deleted by their owner', async () => {
+  const app = await buildApp({ dbPath: ':memory:', fetchPr: fakeGithub({}) });
+  const register = (i: number, ip = '203.0.113.5') =>
+    app.inject({
+      method: 'POST',
+      url: '/api/users/register',
+      remoteAddress: ip,
+      payload: { email: `u${i}@example.com`, handle: `user${i}`, tier: i % 2 ? 'free' : 'pro_20', timezone: 'UTC' },
+    });
+  try {
+    for (let i = 0; i < REGISTRATIONS_PER_IP_PER_HOUR; i++) assert.notEqual((await register(i)).statusCode, 429);
+    assert.equal((await register(999)).statusCode, 429);
+    assert.equal((await register(1000, '198.51.100.7')).statusCode, 201, 'other addresses are unaffected');
+
+    // Waitlist entries are not duplicated
+    await register(2001, '198.51.100.8');
+    await register(2001, '198.51.100.9');
+    assert.equal(Number((app.db.prepare("SELECT COUNT(*) AS n FROM waitlist WHERE email = 'u2001@example.com'").get() as { n: number }).n), 1);
+
+    // Delete my account: token stops working, personal data is gone
+    const res = await register(3000, '198.51.100.10');
+    const token = res.json().token as string;
+    const auth = { authorization: `Bearer ${token}` };
+    assert.equal((await app.inject({ method: 'POST', url: '/api/me/delete', headers: auth })).statusCode, 200);
+    assert.equal((await app.inject({ method: 'GET', url: '/api/me', headers: auth })).statusCode, 401);
+    assert.equal(app.db.prepare("SELECT 1 FROM users WHERE email = 'u3000@example.com' OR handle = 'user3000'").get(), undefined);
   } finally {
     await app.close();
   }

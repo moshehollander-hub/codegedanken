@@ -65,8 +65,12 @@ Every prompt instructs Claude to append to the PR description:
   `PORT = process.env.PORT || 3000`, `DB_PATH` env var.
   - `GET /`: landing page, two-tab bridge diagram, live time-zone balance, registration/waitlist.
   - `GET /dashboard`: submit task, decomposition preview, my tasks and PRs, active nodes, "help someone".
-  - `POST /api/users/register` (free → 403 + waitlist), `GET /api/me`
-  - `POST /api/tasks/preview`, `POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/:id`
+  - `POST /api/users/register` (free → 403 + waitlist; 10 sign-ups per IP per hour), `GET /api/me`,
+    `POST /api/me/delete` (self-service account deletion)
+  - `POST /api/tasks/preview`, `POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/:id`,
+    `POST /api/tasks/:id/cancel` (refunds subtasks nobody has started)
+  - Completion checks the PR with the GitHub API (exists, opened after the claim, has the footer, not reused);
+    optional `GITHUB_TOKEN` env var raises GitHub's rate limit.
   - Bridge: `POST /api/nodes/heartbeat`, `GET /api/tasks/pull` (offer only, no claim),
     `POST /api/subtasks/:id/claim`, `POST /api/subtasks/:id/release`, `POST /api/tasks/:subtaskId/complete`
   - Public: `GET /api/stats`, `GET /api/prs`, `GET /healthz`

@@ -14,7 +14,7 @@
   </header>
   <main class="max-w-3xl mx-auto px-4 pb-16 space-y-6 text-sm leading-relaxed text-slate-300">
     <h1 class="text-3xl font-bold text-white">Privacy Policy</h1>
-    <p class="text-slate-400">Last updated: November 27, 2026. Applies to codegedanken.dev and the Co(de)Gedanken Bridge Chrome extension.</p>
+    <p class="text-slate-400">Last updated: November 28, 2026. Applies to codegedanken.dev and the Co(de)Gedanken Bridge Chrome extension.</p>
 
     <h2 class="text-xl font-semibold text-white">What the website stores</h2>
     <ul class="list-disc pl-5 space-y-1">
@@ -26,7 +26,7 @@
     <h2 class="text-xl font-semibold text-white">What the Bridge extension does</h2>
     <ul class="list-disc pl-5 space-y-1">
       <li>Stores your API token, your chosen hub (codegedanken.dev or a local development hub) and your availability setting in Chrome's local extension storage on your device.</li>
-      <li>Every minute, sends a heartbeat to the hub with your availability, your active/idle/locked state and your time zone, and fetches one subtask offer.</li>
+      <li>Every minute, sends a heartbeat to the hub with your availability, your active/idle/locked state and your time zone. The hub answers with the number of subtasks waiting, which is shown on the extension badge. A subtask is fetched only when you click to see one.</li>
       <li>When you click Accept, it opens or focuses your Claude Code tab on claude.ai and pastes the subtask prompt into the message box. <b>It never presses Send, never submits anything, and never sends follow-up messages.</b></li>
       <li>It does not read your conversations, code, cookies, passwords or browsing history, and it does not run on any site other than claude.ai and the hub.</li>
     </ul>
@@ -41,9 +41,10 @@
 
     <h2 class="text-xl font-semibold text-white">Public information</h2>
     <p>Your handle, and the pull requests completed through the exchange, may appear on public pages of the site (for example the list of delivered PRs). Pull requests themselves are public on GitHub.</p>
+    <p>When you report a pull request as done, the hub reads that public pull request from the GitHub API to check that it exists, was opened after you accepted the subtask, and carries the Co(de)Gedanken footer. Only the pull request is read; nothing about you is sent to GitHub.</p>
 
     <h2 class="text-xl font-semibold text-white">Deleting your data</h2>
-    <p>To delete your account and the data linked to it, open an issue at <a class="underline" href="https://github.com/moshehollander-hub/codegedanken/issues">github.com/moshehollander-hub/codegedanken/issues</a> with your handle (don't post your token). Uninstalling the extension removes everything it stored on your device.</p>
+    <p>You can delete your account yourself, privately: open the <a class="underline" href="/dashboard">dashboard</a> and click <b>Delete my account</b>. This removes your email and handle, withdraws your open tasks, clears your presence and waitlist entries, and stops your token from working. Links to pull requests already delivered stay listed, without your name, because they are public on GitHub. Uninstalling the extension removes everything it stored on your device.</p>
 
     <h2 class="text-xl font-semibold text-white">Contact</h2>
     <p>Questions: <a class="underline" href="https://github.com/moshehollander-hub/codegedanken/discussions">GitHub Discussions</a>.</p>

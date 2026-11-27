@@ -52,8 +52,14 @@ export function canJoinPool(tier: SubscriptionTier): boolean {
 // Domain types
 // ---------------------------------------------------------------------------
 
-export type TaskStatus = 'open' | 'completed';
-export type SubTaskStatus = 'queued' | 'claimed' | 'completed';
+export type TaskStatus = 'open' | 'completed' | 'cancelled';
+export type SubTaskStatus = 'queued' | 'claimed' | 'completed' | 'cancelled';
+
+/** Text every delivered PR must contain (part of PR_FOOTER); checked against GitHub on completion. */
+export const PR_FOOTER_MARKER = 'codegedanken.dev';
+
+/** Registrations (including waitlist sign-ups) allowed per IP address per hour. */
+export const REGISTRATIONS_PER_IP_PER_HOUR = 10;
 
 export interface User {
   id: string;
