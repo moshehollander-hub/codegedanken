@@ -21,7 +21,11 @@ npm start       # http://localhost:3000
 ```
 
 Load the extension: `chrome://extensions` → enable **Developer mode** → **Load unpacked** → choose the `extension/`
-folder. In the popup, pick `localhost:3000`, paste the API token you got when registering, and save.
+folder. Paste the API token you got when registering, and save.
+
+To point the extension at a local hub, add `"http://localhost:3000/*"` to `host_permissions` in your copy of
+`extension/manifest.json` (don't commit it; `npm test` rejects it), reload the extension, and pick
+`localhost:3000` in the popup.
 
 ## Deploy
 

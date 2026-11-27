@@ -63,7 +63,10 @@ function renderOffer(o, claimed) {
 
 async function init() {
   const s = await chrome.storage.local.get(['env', 'token', 'available', 'activeClaim']);
-  $('env').value = s.env === 'local' ? 'local' : 'prod';
+  // Local hub option only exists in developer copies that add localhost to host_permissions.
+  const localAllowed = (chrome.runtime.getManifest().host_permissions || []).includes('http://localhost:3000/*');
+  if (!localAllowed) $('env').querySelector('option[value="local"]').remove();
+  $('env').value = s.env === 'local' && localAllowed ? 'local' : 'prod';
   $('token').value = s.token || '';
   $('available').checked = Boolean(s.available);
   if (s.activeClaim) renderOffer(s.activeClaim, true);

@@ -18,8 +18,10 @@ for (const size of ['16', '32', '48', '128']) {
   const icon = manifest.icons?.[size];
   if (!icon || !existsSync(join(root, icon))) errors.push(`missing ${size}px icon`);
 }
-for (const h of ['https://claude.ai/*', 'https://codegedanken.dev/*', 'http://localhost:3000/*'])
-  if (!manifest.host_permissions?.includes(h)) errors.push(`missing host permission ${h}`);
+const HOSTS = ['https://claude.ai/*', 'https://codegedanken.dev/*'];
+for (const h of HOSTS) if (!manifest.host_permissions?.includes(h)) errors.push(`missing host permission ${h}`);
+// The store build talks only to claude.ai and the hub; localhost is added by developers in their own copy.
+for (const h of manifest.host_permissions ?? []) if (!HOSTS.includes(h)) errors.push(`unexpected host permission ${h}`);
 
 const files = [
   manifest.background?.service_worker,

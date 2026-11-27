@@ -8,6 +8,9 @@ const ENVS = {
   prod: 'https://codegedanken.dev',
   local: 'http://localhost:3000',
 };
+// The published extension only talks to codegedanken.dev. Developers who run a local hub add
+// "http://localhost:3000/*" to host_permissions in their unpacked copy, which enables the local option.
+const LOCAL_ALLOWED = (chrome.runtime.getManifest().host_permissions || []).includes('http://localhost:3000/*');
 const HEARTBEAT_ALARM = 'cg-heartbeat';
 
 async function settings() {
@@ -16,7 +19,7 @@ async function settings() {
     s.nodeId = 'node-' + crypto.randomUUID().replace(/-/g, '').slice(0, 20);
     await chrome.storage.local.set({ nodeId: s.nodeId });
   }
-  return { env: s.env === 'local' ? 'local' : 'prod', token: s.token || '', available: Boolean(s.available), nodeId: s.nodeId };
+  return { env: s.env === 'local' && LOCAL_ALLOWED ? 'local' : 'prod', token: s.token || '', available: Boolean(s.available), nodeId: s.nodeId };
 }
 
 async function api(method, path, body) {

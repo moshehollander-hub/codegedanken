@@ -7,7 +7,7 @@
 1. נכנסים ל־https://chrome.google.com/webstore/devconsole
 2. לוחצים **New item** (פריט חדש).
 3. בוחרים את הקובץ:
-   `C:\Users\moshe\Dropbox\מטלות\משה\פרטיים\codegedanken\dist-store\codegedanken-bridge-0.1.0.zip`
+   `C:\Users\moshe\Dropbox\מטלות\משה\פרטיים\codegedanken\dist-store\codegedanken-bridge-0.1.1.zip`
 
 ## שלב 2: לשונית Store listing
 
@@ -58,7 +58,7 @@ Shows Co(de)Gedanken subtasks for the user to review, and after the user clicks 
   ```
 - **Host permissions:**
   ```
-  claude.ai: the content script pastes the accepted prompt into the Claude Code composer and shows an overlay; it never submits. codegedanken.dev (and localhost:3000 for development): the hub API for offers, claims, completion and heartbeat.
+  claude.ai: the content script pastes the accepted prompt into the Claude Code composer and shows an overlay; it never submits. codegedanken.dev: the hub API for offers, claims, completion and heartbeat.
   ```
 
 **Remote code:** `No, I am not using remote code`
