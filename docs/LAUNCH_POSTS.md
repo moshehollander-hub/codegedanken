@@ -1,6 +1,6 @@
 # Launch posts: drafts
 
-Everything here is a draft. Read it, edit it, and post it yourself. Replace `<repo-url>` before posting.
+Everything here is a draft. Read it, edit it, and post it yourself. Repo: https://github.com/moshehollander-hub/codegedanken
 
 ---
 
@@ -28,7 +28,7 @@ Stack: Fastify + SQLite (node:sqlite), a Manifest V3 extension, TypeScript share
 Things I'd love feedback on: the decomposer heuristic (bullets + file mentions + union-find), and how to keep
 review quality high when strangers open PRs on your repo.
 
-Code: <repo-url> · Site: https://codegedanken.dev
+Code: https://github.com/moshehollander-hub/codegedanken · Site: https://codegedanken.dev
 
 ---
 
@@ -47,7 +47,7 @@ Every subtask ends as a PR on the requester's repo.
 - No money: credits are earned by helping and spent by asking.
 - Helpers should connect only repos they use for the exchange.
 
-Not affiliated with Anthropic. Feedback welcome, especially on the safety model. <repo-url>
+Not affiliated with Anthropic. Feedback welcome, especially on the safety model. https://github.com/moshehollander-hub/codegedanken
 
 ---
 
@@ -62,7 +62,7 @@ developer help-exchange. The interesting bit is the decomposer: it splits a task
 and merges any that mention the same file, so contributors working in parallel don't produce conflicting PRs.
 
 Looking for contributors on: better decomposition, GitHub App integration to verify PRs, and i18n.
-<repo-url>
+https://github.com/moshehollander-hub/codegedanken
 
 ---
 
@@ -78,5 +78,5 @@ accepts it, and runs it in their own Claude session. You return the favour tomor
 
 3/ No money and no account sharing. A human presses Send every time. Credits are a time bank.
 
-4/ MIT licensed: Fastify + SQLite + an MV3 extension. Code: <repo-url>
+4/ MIT licensed: Fastify + SQLite + an MV3 extension. Code: https://github.com/moshehollander-hub/codegedanken
 Site: https://codegedanken.dev
