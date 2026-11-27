@@ -1,0 +1,22 @@
+{
+  "name": "codegedanken",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Co(de)Gedanken — a human-approved, time-zone task exchange for developers using Claude Code on the web.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "web-hub",
+    "extension"
+  ],
+  "scripts": {
+    "build": "npm run build -w shared && npm run build -w web-hub && npm run build -w extension",
+    "test": "npm run build && npm test -w shared && npm test -w web-hub && npm test -w extension",
+    "start": "npm start -w web-hub",
+    "dev": "npm run build && npm start -w web-hub"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

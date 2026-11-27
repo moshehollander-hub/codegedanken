@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Co(de)Gedanken Bridge</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; width: 360px; font: 13px/1.45 system-ui, sans-serif; background: #0b0d12; color: #e2e8f0; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #1e293b; }
+    h1 { font-size: 14px; margin: 0; } h1 span { color: #818cf8; }
+    section { padding: 12px 14px; border-bottom: 1px solid #1e293b; }
+    label { display: block; margin-bottom: 8px; color: #94a3b8; }
+    input, select { width: 100%; margin-top: 4px; padding: 6px 8px; border-radius: 8px; border: 1px solid #334155; background: #020617; color: #e2e8f0; }
+    button { padding: 6px 10px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; cursor: pointer; }
+    button.primary { background: #6366f1; border-color: #6366f1; color: white; }
+    button.go { background: #059669; border-color: #059669; color: white; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #312e81; color: #c7d2fe; }
+    .muted { color: #64748b; font-size: 12px; }
+    pre { white-space: pre-wrap; max-height: 180px; overflow: auto; background: #020617; padding: 8px; border-radius: 8px; font-size: 11px; }
+    .switch { display: flex; align-items: center; gap: 8px; color: #e2e8f0; }
+    .switch input { width: auto; margin: 0; }
+    #msg { min-height: 1em; }
+    .warn { color: #fbbf24; } .ok { color: #34d399; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Co<span>(de)</span>Gedanken Bridge</h1>
+    <span id="tier" class="badge">not connected</span>
+  </header>
+
+  <section>
+    <label>Hub
+      <select id="env">
+        <option value="prod">codegedanken.dev</option>
+        <option value="local">localhost:3000</option>
+      </select>
+    </label>
+    <label>API token<input id="token" type="password" placeholder="cg_…" /></label>
+    <div class="row"><button id="save" class="primary">Save &amp; connect</button><span id="who" class="muted"></span></div>
+  </section>
+
+  <section>
+    <label class="switch"><input id="available" type="checkbox" /> Available to help (shows waiting subtasks on the badge)</label>
+    <div class="muted">Subtasks never run by themselves. You review each one, accept it, and press Send in Claude.</div>
+  </section>
+
+  <section id="work">
+    <div class="row"><button id="pull" class="go">Show next subtask</button></div>
+    <div id="offer"></div>
+  </section>
+
+  <section><div id="msg" class="muted"></div></section>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Co(de)Gedanken — Time-Zone Task Exchange</title>
+  <meta name="description" content="A human-approved task exchange for developers on Claude Code. Queue work before bed, wake up to pull requests from developers in other time zones." />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <style>
+    body { background: #0b0d12; }
+    .glow { box-shadow: 0 0 0 1px rgba(148,163,184,.12), 0 20px 60px -20px rgba(99,102,241,.35); }
+  </style>
+</head>
+<body class="text-slate-200 antialiased">
+  <header class="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between">
+    <a href="/" class="font-semibold text-lg tracking-tight">Co<span class="text-indigo-400">(de)</span>Gedanken</a>
+    <nav class="flex gap-4 text-sm text-slate-400">
+      <a href="#how" class="hover:text-white">How it works</a>
+      <a href="#join" class="hover:text-white">Join</a>
+      <a href="/dashboard" class="text-indigo-300 hover:text-white">Dashboard →</a>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4">
+    <section class="py-12 sm:py-20">
+      <p class="text-indigo-300 text-sm font-medium mb-3">Gedanken (German): thoughts. Code that gets thought through while you sleep.</p>
+      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white max-w-3xl">Queue your task before bed. Wake up to pull requests.</h1>
+      <p class="mt-5 text-lg text-slate-400 max-w-2xl">Co(de)Gedanken is a help-exchange for developers who use Claude Code. Your task is split into non-conflicting pieces, and developers whose day is just starting pick them up, review them, and run them in <em>their own</em> Claude session. You return the favour during your day.</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="#join" class="px-5 py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium">Join the exchange</a>
+        <a href="/dashboard" class="px-5 py-2.5 rounded-lg border border-slate-700 hover:border-slate-500">Open dashboard</a>
+      </div>
+    </section>
+
+    <section id="how" class="py-10">
+      <h2 class="text-2xl font-semibold text-white mb-6">The two-tab bridge</h2>
+      <div class="glow rounded-2xl bg-slate-900/60 p-6">
+        <svg viewBox="0 0 760 210" class="w-full h-auto" role="img" aria-label="Diagram: Co(de)Gedanken Hub tab and Claude Code tab connected by the Bridge extension, with the human approving each step">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#818cf8"/></marker>
+          </defs>
+          <rect x="10" y="40" width="220" height="120" rx="14" fill="#111827" stroke="#334155"/>
+          <text x="120" y="80" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="600">Tab 1 · Web Hub</text>
+          <text x="120" y="104" text-anchor="middle" fill="#94a3b8" font-size="12">codegedanken.dev</text>
+          <text x="120" y="126" text-anchor="middle" fill="#94a3b8" font-size="12">queue · decomposer · PRs</text>
+
+          <rect x="290" y="55" width="180" height="90" rx="14" fill="#1e1b4b" stroke="#6366f1"/>
+          <text x="380" y="92" text-anchor="middle" fill="#e0e7ff" font-size="15" font-weight="600">Bridge extension</text>
+          <text x="380" y="114" text-anchor="middle" fill="#a5b4fc" font-size="12">shows · pastes · never sends</text>
+
+          <rect x="530" y="40" width="220" height="120" rx="14" fill="#111827" stroke="#334155"/>
+          <text x="640" y="80" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="600">Tab 2 · Claude Code</text>
+          <text x="640" y="104" text-anchor="middle" fill="#94a3b8" font-size="12">claude.ai — your own account</text>
+          <text x="640" y="126" text-anchor="middle" fill="#94a3b8" font-size="12">you press Send</text>
+
+          <line x1="232" y1="100" x2="286" y2="100" stroke="#818cf8" stroke-width="2" marker-end="url(#ar)"/>
+          <line x1="472" y1="100" x2="526" y2="100" stroke="#818cf8" stroke-width="2" marker-end="url(#ar)"/>
+          <text x="380" y="190" text-anchor="middle" fill="#fbbf24" font-size="13">👤 A human reads and approves every subtask before it runs</text>
+        </svg>
+      </div>
+      <ol class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
+        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">1. Submit.</b> Describe the task with a bullet list. The Gedanken decomposer groups bullets so no two subtasks touch the same file.</li>
+        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">2. Someone awake accepts.</b> The extension shows them the full prompt. They accept, it is pasted into their Claude Code tab, and they press Send.</li>
+        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">3. PRs arrive.</b> Each subtask becomes a PR on your repo. The helper earns credits; you spend them. No money changes hands.</li>
+      </ol>
+    </section>
+
+    <section class="py-10">
+      <h2 class="text-2xl font-semibold text-white mb-2">Live time-zone balance</h2>
+      <p class="text-slate-400 text-sm mb-4">Helpers online and subtasks waiting, by UTC offset. Updates every 30 seconds.</p>
+      <div class="glow rounded-2xl bg-slate-900/60 p-5">
+        <div class="flex flex-wrap gap-6 text-sm mb-4" id="stats-summary"><span class="text-slate-500">Loading…</span></div>
+        <div id="tz-chart" class="flex items-end gap-1 h-40 overflow-x-auto"></div>
+        <div class="flex gap-4 text-xs text-slate-400 mt-3">
+          <span><span class="inline-block w-3 h-3 rounded-sm bg-emerald-400 align-middle"></span> helpers available</span>
+          <span><span class="inline-block w-3 h-3 rounded-sm bg-amber-400 align-middle"></span> subtasks queued</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="join" class="py-10">
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h2 class="text-2xl font-semibold text-white mb-3">Join the exchange</h2>
+          <p class="text-slate-400 text-sm">Open to developers on a paid Claude plan. Your plan is self-declared and sets your starting credits and queue priority. Free-plan users go on the waitlist.</p>
+          <table class="mt-5 w-full text-sm">
+            <thead class="text-slate-400"><tr><th class="text-left py-1">Plan</th><th class="text-right">Start credits</th><th class="text-right">Priority</th></tr></thead>
+            <tbody id="tier-table" class="divide-y divide-slate-800"></tbody>
+          </table>
+          <ul class="mt-6 text-sm text-slate-400 space-y-2 list-disc pl-5">
+            <li>Every subtask runs in the helper's own Claude account, only after they read it and press Send.</li>
+            <li>Credits are a time bank. They can't be bought or sold.</li>
+            <li>Helpers should connect only the repositories they use for the exchange.</li>
+          </ul>
+        </div>
+        <form id="register" class="glow rounded-2xl bg-slate-900/60 p-6 space-y-4">
+          <label class="block text-sm">Email<input name="email" type="email" required class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2" /></label>
+          <label class="block text-sm">Handle<input name="handle" required pattern="[A-Za-z0-9_-]{2,32}" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2" /></label>
+          <label class="block text-sm">Claude plan (self-declared)
+            <select name="tier" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2">
+              <option value="pro_20">Pro ($20/mo)</option>
+              <option value="max_100">Max ($100/mo)</option>
+              <option value="max_200">Max ($200/mo)</option>
+              <option value="enterprise">Enterprise</option>
+              <option value="free">Free (waitlist)</option>
+            </select>
+          </label>
+          <label class="block text-sm">Time zone<input name="timezone" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2" /></label>
+          <button class="w-full py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium">Register</button>
+          <div id="register-result" class="text-sm" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-4 py-10 text-xs text-slate-500">
+    Co(de)Gedanken is an independent open-source project (MIT) and is not affiliated with or endorsed by Anthropic.
+    <a class="underline" href="https://github.com/">Source on GitHub</a>.
+  </footer>
+
+  <script>
+    const TIERS = [
+      ['Pro ($20/mo)', 100, '1.0×'], ['Max ($100/mo)', 500, '1.5×'], ['Max ($200/mo)', 1200, '2.0×'], ['Enterprise', 2500, '2.5×'], ['Free', '—', 'waitlist'],
+    ];
+    document.getElementById('tier-table').innerHTML = TIERS.map(([n, c, p]) =>
+      `<tr><td class="py-1.5">${n}</td><td class="text-right">${c}</td><td class="text-right">${p}</td></tr>`).join('');
+
+    const form = document.getElementById('register');
+    form.timezone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const out = document.getElementById('register-result');
+      out.textContent = 'Registering…';
+      const body = Object.fromEntries(new FormData(form));
+      const res = await fetch('/api/users/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 201) {
+        try { localStorage.setItem('cg_token', data.token); } catch {}
+        out.innerHTML = `<div class="rounded-lg bg-emerald-950 border border-emerald-700 p-3">Welcome, <b>${esc(data.user.handle)}</b>! Your API token (shown once — paste it into the Bridge extension):<code class="block mt-2 break-all text-emerald-300">${esc(data.token)}</code><a href="/dashboard" class="underline mt-2 inline-block">Go to dashboard →</a></div>`;
+      } else {
+        out.innerHTML = `<div class="rounded-lg bg-amber-950 border border-amber-700 p-3">${esc(data.error || 'Something went wrong.')}${data.details ? '<br>' + data.details.map(esc).join('<br>') : ''}</div>`;
+      }
+    });
+
+    async function loadStats() {
+      try {
+        const s = await (await fetch('/api/stats')).json();
+        document.getElementById('stats-summary').innerHTML = [
+          ['Members', s.users], ['Helpers online', s.onlineNodes], ['Available now', s.availableNodes], ['Subtasks queued', s.queuedSubtasks], ['PRs delivered', s.completedSubtasks],
+        ].map(([k, v]) => `<div><div class="text-2xl font-semibold text-white">${v}</div><div class="text-slate-400">${k}</div></div>`).join('');
+        const byOff = new Map(s.timezones.map((t) => [t.offset, t]));
+        const max = Math.max(1, ...s.timezones.flatMap((t) => [t.available, t.queued]));
+        let html = '';
+        for (let off = -11; off <= 14; off++) {
+          const t = byOff.get(off) || { available: 0, queued: 0 };
+          const h = (v) => Math.round((v / max) * 120);
+          html += `<div class="flex flex-col items-center min-w-[22px]" title="UTC${off >= 0 ? '+' : ''}${off}: ${t.available} available, ${t.queued} queued">
+            <div class="flex items-end gap-px h-[120px]"><div class="w-2 bg-emerald-400 rounded-t" style="height:${h(t.available)}px"></div><div class="w-2 bg-amber-400 rounded-t" style="height:${h(t.queued)}px"></div></div>
+            <div class="text-[10px] text-slate-500 mt-1">${off >= 0 ? '+' : ''}${off}</div></div>`;
+        }
+        document.getElementById('tz-chart').innerHTML = html;
+      } catch {}
+    }
+    loadStats();
+    setInterval(loadStats, 30000);
+  </script>
+</body>
+</html>

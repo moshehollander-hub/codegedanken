@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: codegedanken
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: DB_PATH
+        value: /data/codegedanken.db
+    disk:
+      name: codegedanken-data
+      mountPath: /data
+      sizeGB: 1
+    domains:
+      - codegedanken.dev

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Co(de)Gedanken Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <style>body { background: #0b0d12; } .card { background: rgba(15,23,42,.6); border: 1px solid #1e293b; border-radius: 1rem; padding: 1.25rem; }</style>
+</head>
+<body class="text-slate-200 antialiased">
+  <header class="max-w-6xl mx-auto px-4 py-5 flex flex-wrap gap-3 items-center justify-between">
+    <a href="/" class="font-semibold text-lg">Co<span class="text-indigo-400">(de)</span>Gedanken <span class="text-slate-500 font-normal">/ dashboard</span></a>
+    <form id="token-form" class="flex gap-2 items-center text-sm">
+      <input id="token" type="password" placeholder="API token (cg_…)" class="rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 w-56" />
+      <button class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700">Save</button>
+    </form>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-16 grid lg:grid-cols-3 gap-5">
+    <section class="card lg:col-span-3 flex flex-wrap gap-6 items-center" id="me"><span class="text-slate-500 text-sm">Paste your API token above, or <a class="underline" href="/#join">register</a>.</span></section>
+
+    <section class="card lg:col-span-2">
+      <h2 class="text-lg font-semibold text-white mb-1">Submit a task</h2>
+      <p class="text-xs text-slate-400 mb-4">Use a bullet list: each bullet can become a subtask. Bullets that mention the same file are kept together so parallel PRs don't conflict. Cost: 10 credits per subtask.</p>
+      <form id="task-form" class="space-y-3">
+        <input name="title" required placeholder="Title" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2" />
+        <input name="repoUrl" required placeholder="https://github.com/you/repo" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2" />
+        <textarea name="description" required rows="7" placeholder="Context…&#10;- Add --json flag in src/cli.ts&#10;- Document it in README.md" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 font-mono text-sm"></textarea>
+        <div class="flex gap-2">
+          <button type="button" id="preview-btn" class="px-4 py-2 rounded-lg border border-slate-600 hover:border-slate-400">Preview split</button>
+          <button class="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white">Submit</button>
+        </div>
+      </form>
+      <div id="preview" class="mt-4 space-y-2 text-sm"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="text-lg font-semibold text-white mb-1">Help someone</h2>
+      <p class="text-xs text-slate-400 mb-4">Read the subtask first. Accepting copies the prompt; paste it into Claude Code on the web and press Send yourself. The Bridge extension does the pasting for you.</p>
+      <button id="pull-btn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Show next subtask</button>
+      <div id="offer" class="mt-4 text-sm"></div>
+    </section>
+
+    <section class="card lg:col-span-2">
+      <h2 class="text-lg font-semibold text-white mb-3">My tasks &amp; delivered PRs</h2>
+      <div id="tasks" class="space-y-4 text-sm"><span class="text-slate-500">—</span></div>
+    </section>
+
+    <section class="card">
+      <h2 class="text-lg font-semibold text-white mb-3">Active browser nodes</h2>
+      <div id="nodes" class="space-y-2 text-sm"><span class="text-slate-500">—</span></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let token = '';
+    try { token = localStorage.getItem('cg_token') || ''; } catch {}
+    $('token').value = token;
+    $('token-form').addEventListener('submit', (e) => { e.preventDefault(); token = $('token').value.trim(); try { localStorage.setItem('cg_token', token); } catch {} refresh(); });
+
+    async function api(method, url, body) {
+      const res = await fetch(url, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
+      const data = res.status === 204 ? null : await res.json().catch(() => ({}));
+      return { status: res.status, data };
+    }
+    const badge = (s) => ({ queued: 'bg-amber-900 text-amber-200', claimed: 'bg-sky-900 text-sky-200', completed: 'bg-emerald-900 text-emerald-200', open: 'bg-slate-800 text-slate-200' }[s] || 'bg-slate-800');
+
+    async function refresh() {
+      if (!token) return;
+      const me = await api('GET', '/api/me');
+      if (me.status !== 200) { $('me').innerHTML = '<span class="text-amber-300 text-sm">Token not recognised.</span>'; return; }
+      const u = me.data.user;
+      $('me').innerHTML = `<div><div class="text-xl font-semibold text-white">${esc(u.handle)}</div><div class="text-xs text-slate-400">${esc(u.timezone)}</div></div>
+        <div class="px-2 py-1 rounded bg-indigo-900 text-indigo-200 text-xs">${esc(u.tier)} · self-declared</div>
+        <div><div class="text-xl font-semibold text-white">${u.credits}</div><div class="text-xs text-slate-400">credits</div></div>
+        <div><div class="text-xl font-semibold text-white">${u.completedCount}</div><div class="text-xs text-slate-400">subtasks done for others</div></div>`;
+
+      const t = await api('GET', '/api/tasks');
+      $('tasks').innerHTML = (t.data.tasks || []).map((task) => `
+        <div class="border border-slate-800 rounded-xl p-3">
+          <div class="flex justify-between gap-2"><b class="text-white">${esc(task.title)}</b><span class="text-xs px-2 py-0.5 rounded ${badge(task.status)}">${task.status}</span></div>
+          <a class="text-xs text-slate-400 underline" href="${esc(task.repoUrl)}" target="_blank" rel="noopener">${esc(task.repoUrl)}</a>
+          <ul class="mt-2 space-y-1">${task.subtasks.map((s) => `<li class="flex flex-wrap gap-2 items-center"><span class="text-xs px-2 py-0.5 rounded ${badge(s.status)}">${s.status}</span><span>${esc(s.title)}</span>${s.files.length ? `<span class="text-xs text-slate-500">${s.files.map(esc).join(', ')}</span>` : ''}${s.prUrl ? `<a class="text-emerald-300 underline" target="_blank" rel="noopener" href="${esc(s.prUrl)}">PR ↗</a>` : ''}</li>`).join('')}</ul>
+        </div>`).join('') || '<span class="text-slate-500">No tasks yet.</span>';
+
+      const n = await api('GET', '/api/nodes');
+      $('nodes').innerHTML = (n.data.nodes || []).map((x) => `<div class="flex justify-between"><span>${esc(x.handle)} <span class="text-xs text-slate-500">${esc(x.timezone)}</span></span><span class="text-xs ${x.available ? 'text-emerald-300' : 'text-slate-500'}">${x.available ? 'available' : 'busy'} · ${esc(x.idleState)}</span></div>`).join('') || '<span class="text-slate-500">No nodes online.</span>';
+    }
+
+    const taskBody = () => Object.fromEntries(new FormData($('task-form')));
+    $('preview-btn').addEventListener('click', async () => {
+      const r = await api('POST', '/api/tasks/preview', taskBody());
+      $('preview').innerHTML = r.status !== 200 ? `<div class="text-amber-300">${esc(r.data.error)} ${(r.data.details || []).map(esc).join(' ')}</div>` :
+        `<div class="text-slate-400">${r.data.subtasks.length} subtask(s) · ${r.data.cost} credits</div>` + r.data.subtasks.map((s, i) => `<div class="border border-slate-800 rounded-lg p-2"><b>${i + 1}. ${esc(s.title)}</b>${s.files.length ? `<div class="text-xs text-slate-500">files: ${s.files.map(esc).join(', ')}</div>` : ''}</div>`).join('');
+    });
+    $('task-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const r = await api('POST', '/api/tasks', taskBody());
+      $('preview').innerHTML = r.status === 201 ? `<div class="text-emerald-300">Submitted — ${r.data.task.subtasks.length} subtask(s), ${r.data.cost} credits.</div>` : `<div class="text-amber-300">${esc(r.data.error)} ${(r.data.details || []).map(esc).join(' ')}</div>`;
+      if (r.status === 201) { $('task-form').reset(); refresh(); }
+    });
+
+    function renderOffer(o, claimed) {
+      $('offer').innerHTML = `
+        <div class="border border-slate-800 rounded-xl p-3 space-y-2">
+          <div><b class="text-white">${esc(o.subtask.title)}</b></div>
+          <div class="text-xs text-slate-400">for ${esc(o.task.ownerHandle)} · <a class="underline" target="_blank" rel="noopener" href="${esc(o.task.repoUrl)}">${esc(o.task.repoUrl)}</a> · +${o.creditsOnCompletion} credits</div>
+          <pre class="whitespace-pre-wrap text-xs bg-slate-950 rounded-lg p-2 max-h-64 overflow-auto">${esc(o.prompt)}</pre>
+          ${claimed ? `
+            <div class="text-xs text-sky-300">Accepted. Prompt copied — paste it into Claude Code and press Send yourself.</div>
+            <input id="pr-url" placeholder="${esc(o.task.repoUrl)}/pull/123" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs" />
+            <div class="flex gap-2"><button id="complete-btn" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs">Mark complete</button><button id="release-btn" class="px-3 py-1.5 rounded-lg border border-slate-600 text-xs">Give back</button></div>`
+          : `<button id="accept-btn" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs">I've read it — accept</button>`}
+          <div id="offer-msg" class="text-xs"></div>
+        </div>`;
+      if (!claimed) $('accept-btn').onclick = async () => {
+        const r = await api('POST', `/api/subtasks/${o.subtask.id}/claim`);
+        if (r.status !== 200) { $('offer-msg').textContent = r.data.error; return; }
+        try { await navigator.clipboard.writeText(r.data.prompt); } catch {}
+        renderOffer(r.data, true);
+      };
+      else {
+        $('complete-btn').onclick = async () => {
+          const r = await api('POST', `/api/tasks/${o.subtask.id}/complete`, { prUrl: $('pr-url').value });
+          $('offer-msg').innerHTML = r.status === 200 ? `<span class="text-emerald-300">Thanks! You now have ${r.data.credits} credits.</span>` : `<span class="text-amber-300">${esc(r.data.error)}</span>`;
+          refresh();
+        };
+        $('release-btn').onclick = async () => { await api('POST', `/api/subtasks/${o.subtask.id}/release`); $('offer').innerHTML = ''; };
+      }
+    }
+    $('pull-btn').addEventListener('click', async () => {
+      const r = await api('GET', '/api/tasks/pull');
+      if (r.status === 204) { $('offer').innerHTML = '<span class="text-slate-500">Nothing waiting right now.</span>'; return; }
+      if (r.status !== 200) { $('offer').innerHTML = `<span class="text-amber-300">${esc(r.data.error)}</span>`; return; }
+      renderOffer(r.data, false);
+    });
+
+    refresh();
+    setInterval(refresh, 30000);
+  </script>
+</body>
+</html>

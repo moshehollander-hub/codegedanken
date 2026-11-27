@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Co(de)Gedanken Bridge",
+  "short_name": "CG Bridge",
+  "version": "0.1.0",
+  "description": "Shows Co(de)Gedanken subtasks for you to review, and pastes the ones you accept into Claude Code on the web. You always press Send yourself.",
+  "permissions": ["storage", "alarms", "tabs", "idle"],
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://codegedanken.dev/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Co(de)Gedanken Bridge",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
