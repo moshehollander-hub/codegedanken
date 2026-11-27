@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Co(de)Gedanken</title>
+  <meta name="description" content="What Co(de)Gedanken and the Co(de)Gedanken Bridge extension store, and what they never touch." />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <style>body { background: #0b0d12; }</style>
+</head>
+<body class="text-slate-200 antialiased">
+  <header class="max-w-3xl mx-auto px-4 py-6">
+    <a href="/" class="font-semibold text-lg tracking-tight">Co<span class="text-indigo-400">(de)</span>Gedanken</a>
+  </header>
+  <main class="max-w-3xl mx-auto px-4 pb-16 space-y-6 text-sm leading-relaxed text-slate-300">
+    <h1 class="text-3xl font-bold text-white">Privacy Policy</h1>
+    <p class="text-slate-400">Last updated: November 27, 2026. Applies to codegedanken.dev and the Co(de)Gedanken Bridge Chrome extension.</p>
+
+    <h2 class="text-xl font-semibold text-white">What the website stores</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>Your account: email address, handle, self-declared Claude plan, time zone, credit balance, and a hashed API token (the token itself is shown to you once and never stored in plain text).</li>
+      <li>Tasks you submit: title, description, the public GitHub repository URL, the subtasks it is split into, and the pull request links helpers report back.</li>
+      <li>Presence for the dashboard: whether you marked yourself available, an active/idle/locked state, your time zone and when your extension last checked in.</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-white">What the Bridge extension does</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>Stores your API token, your chosen hub (codegedanken.dev or a local development hub) and your availability setting in Chrome's local extension storage on your device.</li>
+      <li>Every minute, sends a heartbeat to the hub with your availability, your active/idle/locked state and your time zone, and fetches one subtask offer.</li>
+      <li>When you click Accept, it opens or focuses your Claude Code tab on claude.ai and pastes the subtask prompt into the message box. <b>It never presses Send, never submits anything, and never sends follow-up messages.</b></li>
+      <li>It does not read your conversations, code, cookies, passwords or browsing history, and it does not run on any site other than claude.ai and the hub.</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-white">What we never do</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>We don't sell, rent or share your data with anyone, and we don't use it for advertising.</li>
+      <li>We don't use analytics or tracking cookies.</li>
+      <li>We never ask for or receive your Claude, Anthropic or GitHub credentials. Each person uses only their own accounts.</li>
+      <li>No money is involved: credits can't be bought, sold or paid out.</li>
+    </ul>
+
+    <h2 class="text-xl font-semibold text-white">Public information</h2>
+    <p>Your handle, and the pull requests completed through the exchange, may appear on public pages of the site (for example the list of delivered PRs). Pull requests themselves are public on GitHub.</p>
+
+    <h2 class="text-xl font-semibold text-white">Deleting your data</h2>
+    <p>To delete your account and the data linked to it, open an issue at <a class="underline" href="https://github.com/moshehollander-hub/codegedanken/issues">github.com/moshehollander-hub/codegedanken/issues</a> with your handle (don't post your token). Uninstalling the extension removes everything it stored on your device.</p>
+
+    <h2 class="text-xl font-semibold text-white">Contact</h2>
+    <p>Questions: <a class="underline" href="https://github.com/moshehollander-hub/codegedanken/discussions">GitHub Discussions</a>.</p>
+
+    <p class="text-slate-500 text-xs pt-6">Co(de)Gedanken is an independent open-source project (MIT) and is not affiliated with or endorsed by Anthropic.</p>
+  </main>
+</body>
+</html>

@@ -8,7 +8,7 @@ const read = (f) => readFileSync(fileURLToPath(new URL('../' + f, import.meta.ur
 test('manifest is MV3 with the expected permissions', () => {
   const m = JSON.parse(read('manifest.json'));
   assert.equal(m.manifest_version, 3);
-  assert.deepEqual([...m.permissions].sort(), ['alarms', 'idle', 'storage', 'tabs']);
+  assert.deepEqual([...m.permissions].sort(), ['alarms', 'idle', 'storage']);
   assert.ok(m.content_scripts[0].matches.includes('https://claude.ai/*'));
 });
 

@@ -9,7 +9,13 @@ const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
 const errors = [];
 
 if (manifest.manifest_version !== 3) errors.push('manifest_version must be 3');
-for (const p of ['storage', 'alarms', 'tabs', 'idle']) if (!manifest.permissions?.includes(p)) errors.push(`missing permission ${p}`);
+for (const p of ['storage', 'alarms', 'idle']) if (!manifest.permissions?.includes(p)) errors.push(`missing permission ${p}`);
+// Keep the permission list minimal for Chrome Web Store review: host permissions already cover claude.ai tabs.
+for (const p of manifest.permissions ?? []) if (!['storage', 'alarms', 'idle'].includes(p)) errors.push(`unexpected permission ${p}`);
+for (const size of ['16', '32', '48', '128']) {
+  const icon = manifest.icons?.[size];
+  if (!icon || !existsSync(join(root, icon))) errors.push(`missing ${size}px icon`);
+}
 for (const h of ['https://claude.ai/*', 'https://codegedanken.dev/*', 'http://localhost:3000/*'])
   if (!manifest.host_permissions?.includes(h)) errors.push(`missing host permission ${h}`);
 

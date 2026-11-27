@@ -152,6 +152,7 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance &
   };
   app.get('/', page('index.html'));
   app.get('/dashboard', page('dashboard.html'));
+  app.get('/privacy', page('privacy.html'));
   app.get('/healthz', async () => ({ ok: true }));
 
   // -------------------------------------------------------------------------

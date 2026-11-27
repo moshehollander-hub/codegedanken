@@ -4,7 +4,14 @@
   "short_name": "CG Bridge",
   "version": "0.1.0",
   "description": "Shows Co(de)Gedanken subtasks for you to review, and pastes the ones you accept into Claude Code on the web. You always press Send yourself.",
-  "permissions": ["storage", "alarms", "tabs", "idle"],
+  "permissions": ["storage", "alarms", "idle"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "homepage_url": "https://codegedanken.dev",
   "host_permissions": [
     "https://claude.ai/*",
     "https://codegedanken.dev/*",
@@ -16,6 +23,10 @@
   },
   "action": {
     "default_title": "Co(de)Gedanken Bridge",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    },
     "default_popup": "popup.html"
   },
   "content_scripts": [
