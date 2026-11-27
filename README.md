@@ -1,11 +1,12 @@
 # Co(de)Gedanken
 
-**Queue your task before bed. Wake up to pull requests.**
+**Help someone on your night. Get help on theirs.**
 
-Co(de)Gedanken is an open-source help-exchange for developers who use Claude Code on the web. Your task is
-split into subtasks that don't touch the same files. Developers in other time zones review a subtask, accept
-it, and run it in **their own** Claude session; each one comes back to you as a pull request. You return the
-favour during your day. Credits are a time bank, not money.
+Co(de)Gedanken is an open-source help-exchange for developers who use Claude Code on the web. Before you go to
+sleep, you pick a subtask from a developer in another time zone, read it, and press Send in **your own** Claude
+session; Claude works on it while you sleep. When night comes where they live, someone does the same for your
+task. Tasks are split into subtasks that don't touch the same files, and each one comes back as a pull request.
+Credits are a time bank, not money.
 
 - **Web Hub**: landing page, dashboard, task decomposer and bridge API (`web-hub/`)
 - **Bridge extension**: Chrome MV3; shows subtasks, pastes the ones you accept into Claude Code. **You always press Send.** (`extension/`)

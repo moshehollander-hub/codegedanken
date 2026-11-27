@@ -6,7 +6,7 @@ Everything here is a draft. Read it, edit it, and post it yourself. Repo: https:
 
 ## Hacker News: Show HN
 
-**Title:** Show HN: Co(de)Gedanken – queue a coding task at night, wake up to PRs from other time zones
+**Title:** Show HN: Co(de)Gedanken – help someone's code on your night, get help on theirs
 
 **Text:**
 
@@ -17,9 +17,10 @@ How it works:
 
 - You describe a task as a bullet list. A simple decomposer groups bullets so that no two subtasks touch the
   same file (so the resulting PRs don't conflict).
-- Developers whose day is starting see a subtask in a Chrome extension, read the full prompt, accept it, and
-  run it in their own Claude Code session. The extension pastes the prompt; the person presses Send. Nothing
-  runs unattended.
+- Before going to sleep, a developer in another time zone sees a subtask in a Chrome extension, reads the full
+  prompt, accepts it, and runs it in their own Claude Code session, which works on it overnight. The extension
+  pastes the prompt; the person presses Send.
+- On your night, you do the same for someone else.
 - Each subtask becomes a PR on your repo. Helpers earn credits; you spend them. Credits are a time bank, so
   there's no money involved.
 
@@ -34,12 +35,13 @@ Code: https://github.com/moshehollander-hub/codegedanken · Site: https://codege
 
 ## Reddit: r/ClaudeAI
 
-**Title:** I built a time-zone "help exchange" for Claude Code users: queue tasks at night, get PRs in the morning
+**Title:** I built a time-zone "help exchange" for Claude Code users: help on your night, get help on theirs
 
 **Body:**
 
 Open-source side project. You post a task (bullet list), it's split into non-overlapping subtasks, and
-people in other time zones pick them up in their own Claude Code on the web session. A small Chrome extension
+people in other time zones pick them up before they go to sleep, in their own Claude Code on the web session.
+On your night, you do the same for someone else. A small Chrome extension
 shows the subtask, and if you accept it, pastes it into Claude Code. You still read it and press Send yourself.
 Every subtask ends as a PR on the requester's repo.
 
@@ -70,11 +72,11 @@ https://github.com/moshehollander-hub/codegedanken
 
 **Thread:**
 
-1/ Queue a coding task before bed. Wake up to PRs.
+1/ Help someone's code on your night. Get help on theirs.
 Co(de)Gedanken is an open-source help-exchange for Claude Code users across time zones. 🧠🌍
 
-2/ Your task gets split into subtasks that don't touch the same files. Someone whose day is starting reads one,
-accepts it, and runs it in their own Claude session. You return the favour tomorrow.
+2/ Your task gets split into subtasks that don't touch the same files. Before bed, someone in another time zone
+reads one, accepts it, and runs it in their own Claude session overnight. On your night, you do the same.
 
 3/ No money and no account sharing. A human presses Send every time. Credits are a time bank.
 

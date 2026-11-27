@@ -6,7 +6,9 @@
 
 ## What it is
 
-A help-exchange for developers who use Claude Code on the web. A developer submits a task before bed; the
+A help-exchange for developers who use Claude Code on the web. The core idea: you help someone on your night and they help you on
+theirs. Before going to sleep, a helper accepts a subtask from someone in another time zone and presses Send in
+their own Claude Code, which works on it overnight. A developer submits a task; the
 **Gedanken Task Decomposer** splits it into subtasks that don't touch the same files; developers in other time
 zones review a subtask, accept it, and run it **in their own Claude account**. Each subtask ends as a pull
 request on the requester's repo. Helpers earn credits, requesters spend them.

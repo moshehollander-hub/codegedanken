@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Co(de)Gedanken — Time-Zone Task Exchange</title>
-  <meta name="description" content="A human-approved task exchange for developers on Claude Code. Queue work before bed, wake up to pull requests from developers in other time zones." />
+  <meta name="description" content="A human-approved task exchange for developers on Claude Code. Before bed, you run someone's subtask in your own Claude Code. On their night, someone in another time zone does the same for you." />
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <style>
     body { background: #0b0d12; }
@@ -23,9 +23,9 @@
 
   <main class="max-w-5xl mx-auto px-4">
     <section class="py-12 sm:py-20">
-      <p class="text-indigo-300 text-sm font-medium mb-3">Gedanken (German): thoughts. Code that gets thought through while you sleep.</p>
-      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white max-w-3xl">Queue your task before bed. Wake up to pull requests.</h1>
-      <p class="mt-5 text-lg text-slate-400 max-w-2xl">Co(de)Gedanken is a help-exchange for developers who use Claude Code. Your task is split into non-conflicting pieces, and developers whose day is just starting pick them up, review them, and run them in <em>their own</em> Claude session. You return the favour during your day.</p>
+      <p class="text-indigo-300 text-sm font-medium mb-3">Gedanken (German): thoughts. Your code gets thought through on someone else's night.</p>
+      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white max-w-3xl">Help someone on your night. Get help on theirs.</h1>
+      <p class="mt-5 text-lg text-slate-400 max-w-2xl">Co(de)Gedanken is a help-exchange for developers who use Claude Code. Before you go to sleep, you pick a subtask from someone in another time zone, read it, and press Send in <em>your own</em> Claude session. Claude works on it while you sleep. When night comes where they live, someone does the same for your task. Each task is split into pieces that don't touch the same files, and every piece comes back as a pull request.</p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a href="#join" class="px-5 py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium">Join the exchange</a>
         <a href="/dashboard" class="px-5 py-2.5 rounded-lg border border-slate-700 hover:border-slate-500">Open dashboard</a>
@@ -60,8 +60,8 @@
       </div>
       <ol class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
         <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">1. Submit.</b> Describe the task with a bullet list. The Gedanken decomposer groups bullets so no two subtasks touch the same file.</li>
-        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">2. Someone awake accepts.</b> The extension shows them the full prompt. They accept, it is pasted into their Claude Code tab, and they press Send.</li>
-        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">3. PRs arrive.</b> Each subtask becomes a PR on your repo. The helper earns credits; you spend them. No money changes hands.</li>
+        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">2. Someone accepts before bed.</b> At the end of their day, a helper in another time zone reads the full prompt and accepts it. It is pasted into their Claude Code tab, they press Send, and Claude works on it during their night.</li>
+        <li class="rounded-xl bg-slate-900/60 p-4 border border-slate-800"><b class="text-white">3. You return the favour on your night.</b> Each subtask becomes a PR on your repo. Before you sleep, you run someone else's subtask. Helpers earn credits; requesters spend them. No money changes hands.</li>
       </ol>
     </section>
 
